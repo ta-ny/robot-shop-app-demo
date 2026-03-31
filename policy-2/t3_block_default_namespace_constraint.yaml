@@ -1,0 +1,30 @@
+# t3: Block workload resources in default namespace
+# Template: k8srestrictnamespaces (EKS built-in)
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRestrictNamespaces
+metadata:
+  name: block-default-namespace
+spec:
+  match:
+    scope: Namespaced
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - vcluster-platform
+      - kosmos-configsync
+      - kosmos-policysync
+      - istio-system
+      - ingress-nginx-kiali
+      - kuma-system
+      - wallarm-ingress
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Service"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+      - apiGroups: ["networking.k8s.io"]
+        kinds: ["Ingress"]
+  parameters:
+    restrictedNamespaces:
+      - default

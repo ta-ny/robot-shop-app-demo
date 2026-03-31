@@ -1,0 +1,32 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredAnnotationsWithExemption
+metadata:
+  name: required-annotations
+spec:
+  match:
+    scope: Namespaced
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - ingress-nginx-kiali
+      - vcluster-platform
+      - kosmos-configsync
+      - kosmos-policysync
+      - kuma-system
+      - istio-system
+      - wallarm-ingress
+      - trusted-workloads
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Service"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+      - apiGroups: ["networking.k8s.io"]
+        kinds: ["Ingress"]
+  parameters:
+    annotations:
+      - key: env
+        allowedRegex: "^(test|dev|stg|prod)$"
+      - key: owner
+    exemptionAnnotationKey: "policy-exemption"

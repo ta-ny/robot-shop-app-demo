@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Values.namespace }}
+  annotations:
+    env: {{ .Values.policyAnnotations.env | quote }}
+    owner: {{ .Values.policyAnnotations.owner | quote }}
+  name: catalogue
+  labels:
+    service: catalogue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: catalogue
+  template:
+    metadata:
+      labels:
+        service: catalogue
+    spec:
+      {{ if .Values.psp.enabled }}
+      serviceAccountName: robot-shop
+      {{ end }}
+      containers:
+      - name: catalogue
+        image: {{ .Values.image.repo }}/rs-catalogue:{{ .Values.image.version }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        resources:
+          {{- toYaml .Values.defaultResources | nindent 10 }}
+        env:
+          - name: INSTANA_AGENT_HOST
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+        ports:
+        - containerPort: 8080
+      restartPolicy: Always
+      {{- with .Values.catalogue.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.catalogue.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.catalogue.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

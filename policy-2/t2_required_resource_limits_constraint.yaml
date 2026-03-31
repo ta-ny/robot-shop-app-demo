@@ -1,0 +1,27 @@
+# t2: Enforce resource limits (CPU/memory requests+limits required)
+# Template: k8spodresourcesbestpractices (EKS built-in)
+# Excluded: kube-system (aws-node etc.)
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPodResourcesBestPractices
+metadata:
+  name: required-resource-limits
+spec:
+  match:
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - vcluster-platform
+      - kosmos-configsync
+      - kosmos-policysync
+      - istio-system
+      - ingress-nginx-kiali
+      - kuma-system
+      - wallarm-ingress
+    scope: Namespaced
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+  parameters: {}

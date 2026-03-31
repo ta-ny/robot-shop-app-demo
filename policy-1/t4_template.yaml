@@ -1,0 +1,57 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequiredannotationswithexemption
+  annotations:
+    metadata.gatekeeper.sh/title: "Required Annotations With Exemption"
+    description: "Requires annotations unless object has exemption annotation. Supports excludedNamespaces + exemptionAnnotationKey."
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequiredAnnotationsWithExemption
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            annotations:
+              type: array
+              items:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  allowedRegex:
+                    type: string
+            exemptionAnnotationKey:
+              type: string
+              description: "Annotation key; if present on object, validation is skipped"
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequiredannotationswithexemption
+
+        is_exempt {
+          key := object.get(input.parameters, "exemptionAnnotationKey", "")
+          key != ""
+          input.review.object.metadata.annotations[key]
+        }
+
+        violation[{"msg": msg, "details": {"missing_annotations": missing}}] {
+          not is_exempt
+          provided := {annotation | input.review.object.metadata.annotations[annotation]}
+          required := {annotation | annotation := input.parameters.annotations[_].key}
+          missing := required - provided
+          count(missing) > 0
+          msg := sprintf("you must provide annotation(s): %v", [missing])
+        }
+
+        violation[{"msg": msg}] {
+          not is_exempt
+          value := input.review.object.metadata.annotations[key]
+          expected := input.parameters.annotations[_]
+          expected.key == key
+          expected.allowedRegex != ""
+          not regex.match(expected.allowedRegex, value)
+          msg := sprintf("Annotation <%v: %v> does not satisfy allowed regex: %v", [key, value, expected.allowedRegex])
+        }

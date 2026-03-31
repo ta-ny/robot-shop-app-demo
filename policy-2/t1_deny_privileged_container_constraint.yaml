@@ -1,0 +1,24 @@
+# t1: Deny privileged container deployment
+# Template: k8spspprivilegedcontainer (EKS built-in)
+# Expected: Pod with securityContext.privileged=true rejected at admission
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPPrivilegedContainer
+metadata:
+  name: deny-privileged-container
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - vcluster-platform
+      - kosmos-configsync
+      - kosmos-policysync
+      - istio-system
+      - ingress-nginx-kiali
+      - kuma-system
+      - wallarm-ingress
+  parameters: {}

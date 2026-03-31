@@ -1,0 +1,116 @@
+
+namespace: robot-shop-2-main
+
+policyAnnotations:
+  env: dev
+  owner: robot-shop
+
+# Gatekeeper K8sPodResourcesBestPractices (required-resource-limits): requests and limits
+# required; this cluster enforces memory request == memory limit. Same for init containers.
+# Sized for c5.xlarge with platform pods — 256Mi keeps scheduling lighter on min=1 node.
+defaultResources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 100m
+    memory: 256Mi
+
+initContainerResources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 50m
+    memory: 64Mi
+
+# Registry and repository for Docker images
+# Default is docker/robotshop/image:latest
+image:
+  repo: robotshop
+  version: latest
+  pullPolicy: IfNotPresent
+
+# EUM configuration
+# Provide your key and set the endpoint
+eum:
+  key: null
+  url: https://eum-eu-west-1.instana.io
+  #url: https://eum-us-west-2.instana.io
+
+# Pod Security Policy
+psp:
+  enabled: false
+
+# For the mini ones minikube, minishift set to true
+nodeport: false
+
+# "special" Openshift. Set to true when deploying to any openshift flavour
+openshift: false
+
+ocCreateRoute: false
+
+######################################
+# Affinities for individual workloads
+# set in the following way:
+# <workload>:
+#   affinity: {}
+#   nodeSelector: {}
+#   tolerations: []
+######################################
+
+cart: {}
+
+catalogue: {}
+
+dispatch: {}
+
+mongodb: {}
+
+# DB — higher than defaultResources (requests must equal limits for policy).
+mysql:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+payment:
+  # Alternative payment gateway URL
+  # Default is https://www.paypal.com
+  gateway: null
+  #gateway: https://www.worldpay.com
+
+rabbitmq: {}
+
+# Java — higher than defaultResources (requests must equal limits for policy).
+ratings:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+redis:
+  # Redis uses ephemeral storage in this chart to avoid PVC / storage class issues
+  # in clusters without a default StorageClass.
+  persistence:
+    enabled: false
+
+# Java — above default 256Mi to avoid OOMKilled; below ratings 1Gi to reduce node pressure (tune up if still OOM).
+shipping:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 768Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+
+user: {}
+
+web: {}
